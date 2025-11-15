@@ -1,0 +1,131 @@
+from tkinter import Frame, Label
+from tkinter import ttk
+from tkinter import Button
+from tkinter import messagebox
+
+
+class DeviceListPage(Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.set_ui()
+        self.init_data()
+        
+        
+    def set_ui(self):
+        label = Label(self, text="デバイスリスト", font=("Arial", 20))
+        label.pack(pady=10)
+
+        tree_frame = Frame(self)
+        tree_frame.pack(pady=10, padx=10, fill='both', expand=True)
+
+        tree_scroll = ttk.Scrollbar(tree_frame)
+        tree_scroll.pack(side="right", fill="y")
+
+        self.device_tree = ttk.Treeview(
+            tree_frame, 
+            yscrollcommand=tree_scroll.set, 
+            columns=("ID", "IP", "Gateway"), 
+            show="headings"
+        )
+        self.device_tree.pack(fill='both', expand=True)
+
+        tree_scroll.config(command=self.device_tree.yview)
+
+        self.device_tree.heading("ID", text="デバイス識別ID", anchor="w")
+        self.device_tree.heading("IP", text="IPアドレス", anchor="w")
+        self.device_tree.heading("Gateway", text="ゲートウェイ", anchor="w")
+
+        self.device_tree.column("ID", width=100, anchor="w")
+        self.device_tree.column("IP", width=120, anchor="w")
+        self.device_tree.column("Gateway", width=120, anchor="w")
+        
+        button_frame = Frame(self)
+        button_frame.pack(pady=10)
+        
+        new_button = Button(
+            button_frame, 
+            text="新規", 
+            font=("MSゴシック", "20", " "),
+            width=10,
+            command=self.open_create_device_page
+        )
+        new_button.pack(side="left", padx=10)
+        
+        edit_button = Button(
+            button_frame, 
+            text="編集", 
+            font=("MSゴシック", "20", " "),
+            width=10,
+            command=self.open_edit_device_page
+        )
+        edit_button.pack(side="left", padx=10)
+        
+        delete_button = Button(
+            button_frame, 
+            text="削除", 
+            font=("MSゴシック", "20", " "),
+            width=10,
+            command=self.delete_device_selected_device
+        )
+        delete_button.pack(side="left", padx=10)
+        
+        back_button = Button(
+            button_frame, 
+            text="終了", 
+            font=("MSゴシック", "20", " "),
+            width=10,
+            command=lambda: self.controller.show_frame("MenuPage")
+        )
+        back_button.pack(side="left", padx=10)
+        
+
+    def init_data(self):
+        devices = [
+            ("Dev-001", "192.168.1.10", "192.168.1.1"),
+            ("Dev-002", "192.168.1.11", "192.168.1.1"),
+            ("Dev-003", "10.0.0.50", "10.0.0.1"),
+            ("Dev-004", "172.16.0.25", "172.16.0.1"),
+        ]
+
+        for id_val, ip_val, gw_val in devices:
+            self.device_tree.insert("", "end", iid=id_val, values=(id_val, ip_val, gw_val))
+
+
+    def open_create_device_page(self):
+        self.controller.show_frame("SetupDevicePage")
+
+
+    def delete_device_selected_device(self):
+        selected_item_id = self.device_tree.selection()
+        
+        if not selected_item_id:
+            messagebox.showwarning("警告", "削除するデバイスを選択してください。")
+            return
+            
+        device_id = self.device_tree.item(selected_item_id, 'values')[0]
+
+        confirm = messagebox.askyesno(
+            "削除の確認", 
+            f"デバイス ID: {device_id} を削除してもよろしいですか？\nこの操作は元に戻せません。"
+        )
+        
+        if confirm:
+            self.device_tree.delete(selected_item_id)
+
+
+    def open_edit_device_page(self):
+        selected_item_id = self.device_tree.selection()
+        
+        if not selected_item_id:
+            messagebox.showwarning("警告", "編集するデバイスを選択してください。")
+            return
+
+        selected_values = self.device_tree.item(selected_item_id, 'values')
+        device_data = {
+            "ID": selected_values[0],
+            "IP": selected_values[1],
+            "Gateway": selected_values[2],
+        }
+
+        self.controller.show_frame("SetupDevicePage", data=device_data)
