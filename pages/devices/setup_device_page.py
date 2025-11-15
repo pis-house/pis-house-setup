@@ -10,7 +10,7 @@ class SetupDevicePage(Frame):
         self.set_ui()
         
     def set_ui(self):
-        label = Label(self, text="デバイスセットアップ", font=("Arial", 20))
+        label = Label(self, text="デバイスセッ", font=("Arial", 20))
         label.pack(pady=10)
 
         form_frame = Frame(self)
@@ -26,6 +26,15 @@ class SetupDevicePage(Frame):
             ("gateway", "ゲートウェイ"),
             ("subnet", "サブネット"),
         ]
+
+        auto_assign_button = Button(
+            form_frame,
+            text="自動割り当て",
+            font=("MSゴシック", "20", " "),
+            width=10,
+            command=self.auto_assign_network_config
+        )
+        auto_assign_button.grid(row=3, column=1, columnspan=1)
         
         for i, (key, label_text) in enumerate(fields):
             row_index = i
@@ -64,15 +73,6 @@ class SetupDevicePage(Frame):
             command=lambda: self.controller.show_frame("DeviceListPage")
         )
         back_button.pack(side="left", padx=15)
-        
-        auto_assign_button = Button(
-            form_frame,
-            text="自動割り当て",
-            font=("MSゴシック", "20", " "),
-            width=10,
-            command=self.auto_assign_network_config
-        )
-        auto_assign_button.pack(side="left", padx=15)
         
     def generate_random_ip(self, gateway_ip, subnet_mask):
         if subnet_mask != "255.255.255.0":
