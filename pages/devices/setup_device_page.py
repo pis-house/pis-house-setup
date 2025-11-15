@@ -10,7 +10,7 @@ class SetupDevicePage(Frame):
         self.set_ui()
         
     def set_ui(self):
-        label = Label(self, text="デバイスセッ", font=("Arial", 20))
+        label = Label(self, text="デバイスセットアップ", font=("Arial", 20))
         label.pack(pady=10)
 
         form_frame = Frame(self)
