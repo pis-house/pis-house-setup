@@ -162,6 +162,7 @@ class SetupDevicePage(Frame):
             
             if error_message is not None:
                 messagebox.showerror("エラー", error_message)
+                return
                 
             db = firestore.client()
             target_collection_ref = db.collection("setup").document(AppData.APP_UUID).collection("devices")
