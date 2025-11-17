@@ -87,7 +87,7 @@ class DeviceListPage(Frame):
             
             for device in devices:
                 data = device.to_dict()
-                self.device_tree.insert("", "end", iid=device.id, values=(device.id, data["Name"], data["IP"], data["Gateway"]))
+                self.device_tree.insert("", "end", iid=device.id, values=(device.id, data["name"], data["ip"], data["gateway"]))
 
         except Exception:
             messagebox.showerror("エラー", "デバイスリストの取得中にエラーが発生しました。")

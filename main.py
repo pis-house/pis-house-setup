@@ -16,15 +16,16 @@ class Main(Tk):
     UUID_FILE_NAME = "app_uuid.txt"
     
     def __init__(self):
-        app_uuid = self.init_setup_uuid()
-        AppData.APP_UUID = app_uuid
-        load_dotenv()
-        firebase_admin_sdk_path = os.getenv("FIREBASE_ADMIN_SDK_PATH")
         super().__init__()
-        self.title("セットアップ")
-        self.geometry("1000x500")
+        load_dotenv()
         
-        self.init_firebase(firebase_admin_sdk_path)
+        AppData.APP_UUID = self.init_setup_uuid()
+        AppData.DATA_FOLDER = os.getenv("DATA_FOLDER")
+        AppData.MKLITTLEFS_PATH = os.getenv("MKLITTLEFS_PATH")
+        AppData.OUTPUT_IMAGE = os.getenv("OUTPUT_IMAGE")
+        
+        
+        self.init_firebase(os.getenv("FIREBASE_ADMIN_SDK_PATH"))
         
         self.page_classes = {
             "MenuPage": MenuPage,
@@ -32,6 +33,9 @@ class Main(Tk):
             "SetupDevicePage": SetupDevicePage,
             "SystemInfoPage": SystemInfoPage,
         }
+        
+        self.title("セットアップ")
+        self.geometry("1000x500")
         
         self.container = Frame(self)
         self.container.pack(expand=True, fill="both")

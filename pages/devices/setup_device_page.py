@@ -4,6 +4,8 @@ import random
 from utils.network_config_info import NetworkConfigInfo
 from firebase_admin import firestore
 from app_data import AppData
+from utils.esp32_file_transfer import Esp32FileTransfer
+import json
 
 class SetupDevicePage(Frame):
     def __init__(self, parent, controller):
@@ -132,21 +134,41 @@ class SetupDevicePage(Frame):
                 return
         
         firestore_data = {
-            "Name": device_name,
-            "SSID": setup_data.get("ssid", ""),
-            "Password": setup_data.get("password", ""),
-            "IP": setup_data.get("ip_address", ""),
-            "Gateway": setup_data.get("gateway", ""),
-            "Subnet": setup_data.get("subnet", ""),
+            "name": device_name,
+            "ssid": setup_data["ssid"],
+            "password": setup_data["password"],
+            "ip": setup_data["ip_address"],
+            "gateway": setup_data["gateway"],
+            "subnet": setup_data["subnet"],
         }
 
         try:
+            error_message = Esp32FileTransfer.image_create_and_upload(
+                data_folder=AppData.DATA_FOLDER,
+                mklittlefs_path=AppData.MKLITTLEFS_PATH,
+                output_image=AppData.OUTPUT_IMAGE
+            )
+            
+            setting_data = {
+                "ssid": setup_data["ssid"],
+                "password": setup_data["password"],
+                "ip": setup_data["ip_address"],
+                "gateway": setup_data["gateway"],
+                "subnet": setup_data["subnet"],
+            }
+            
+            with open(f"{AppData.DATA_FOLDER}/setting.json", 'w', encoding='utf-8') as f:
+                json.dump(setting_data, f)
+            
+            if error_message is not None:
+                messagebox.showerror("エラー", error_message)
+                
             db = firestore.client()
             target_collection_ref = db.collection("setup").document(AppData.APP_UUID).collection("devices")
             
-            doc_ref = target_collection_ref.add(firestore_data)
+            target_collection_ref.add(firestore_data)
             messagebox.showinfo("成功", "デバイス設定が正常に登録されました。")
             self.controller.show_frame("DeviceListPage")
             
         except Exception as e:
-            messagebox.showerror("登録エラー", f"Firestoreへの設定登録中にエラーが発生しました: {e}")
+            messagebox.showerror("エラー", f"Firestoreへの設定登録中にエラーが発生しました: {e}")
