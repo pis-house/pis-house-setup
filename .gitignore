@@ -1,1 +1,4 @@
 __pycache__/
+.env
+/environment
+app_uuid.txt

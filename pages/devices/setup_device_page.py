@@ -2,6 +2,8 @@ from tkinter import Frame, Label, Entry, Button
 from tkinter import messagebox
 import random
 from utils.network_config_info import NetworkConfigInfo
+from firebase_admin import firestore
+from app_data import AppData
 
 class SetupDevicePage(Frame):
     def __init__(self, parent, controller):
@@ -12,6 +14,14 @@ class SetupDevicePage(Frame):
     def set_ui(self):
         label = Label(self, text="デバイスセットアップ", font=("Arial", 20))
         label.pack(pady=10)
+        
+        prompt_label = Label(
+            self, 
+            text="デバイス設定を行う前に、ESP32をPCに接続してください", 
+            font=("MSゴシック", 14, "bold"),
+            fg="red"
+        )
+        prompt_label.pack(pady=10)
 
         form_frame = Frame(self)
         form_frame.pack(pady=20, padx=20, fill='x')
@@ -29,9 +39,9 @@ class SetupDevicePage(Frame):
 
         auto_assign_button = Button(
             form_frame,
-            text="自動割り当て",
+            text="ネットワーク情報自動割り当て",
             font=("MSゴシック", "20", " "),
-            width=10,
+            width=20,
             command=self.auto_assign_network_config
         )
         auto_assign_button.grid(row=3, column=1, columnspan=1)
@@ -61,13 +71,13 @@ class SetupDevicePage(Frame):
             text="設定", 
             font=("MSゴシック", "20", " "),
             width=10,
-            command=self.submit_setup_data
+            command=self.submit
         )
         setup_button.pack(side="left", padx=15)
         
         back_button = Button(
             button_frame, 
-            text="戻る", 
+            text="終了", 
             font=("MSゴシック", "20", " "),
             width=10,
             command=lambda: self.controller.show_frame("DeviceListPage")
@@ -103,23 +113,40 @@ class SetupDevicePage(Frame):
         self.entries['gateway'].insert(0, network_config_info.gateway)
         
 
-    def submit_setup_data(self):
-        
+    def submit(self):
         setup_data = {key: entry.get() for key, entry in self.entries.items()}
+        device_name = setup_data.get("device_name")
         
-        if not setup_data.get("device_name"):
-            messagebox.showerror("エラー", "デバイス名は必須項目です。")
-            return
-            
-        print("--- Firestoreへ送信するデータ (モック) ---")
-        for key, value in setup_data.items():
-            print(f"{key}: {value}")
-        print("---------------------------------------")
+        validation_fields = {
+            "device_name": "デバイス名",
+            "ssid": "SSID名",
+            "password": "パスワード",
+            "ip_address": "IPアドレス",
+            "gateway": "ゲートウェイ",
+            "subnet": "サブネット",
+        }
+
+        for key, display_name in validation_fields.items():
+            if not setup_data.get(key) or setup_data.get(key).strip() == "":
+                messagebox.showerror("入力エラー", f"「{display_name}」は必須項目です。入力してください。")
+                return
         
+        firestore_data = {
+            "Name": device_name,
+            "SSID": setup_data.get("ssid", ""),
+            "Password": setup_data.get("password", ""),
+            "IP": setup_data.get("ip_address", ""),
+            "Gateway": setup_data.get("gateway", ""),
+            "Subnet": setup_data.get("subnet", ""),
+        }
+
         try:
-            messagebox.showinfo("成功", "デバイス設定が正常に送信されました。")
+            db = firestore.client()
+            target_collection_ref = db.collection("setup").document(AppData.APP_UUID).collection("devices")
             
-            self.controller.show_frame("MenuPage")
+            doc_ref = target_collection_ref.add(firestore_data)
+            messagebox.showinfo("成功", "デバイス設定が正常に登録されました。")
+            self.controller.show_frame("DeviceListPage")
             
         except Exception as e:
-            messagebox.showerror("送信エラー", f"設定の送信中にエラーが発生しました: {e}")
+            messagebox.showerror("登録エラー", f"Firestoreへの設定登録中にエラーが発生しました: {e}")

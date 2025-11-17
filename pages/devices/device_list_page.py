@@ -1,7 +1,6 @@
-from tkinter import Frame, Label
-from tkinter import ttk
-from tkinter import Button
-from tkinter import messagebox
+from tkinter import Frame, Label, messagebox, Button, Scrollbar, ttk
+from firebase_admin import firestore
+from app_data import AppData
 
 
 class DeviceListPage(Frame):
@@ -19,24 +18,26 @@ class DeviceListPage(Frame):
         tree_frame = Frame(self)
         tree_frame.pack(pady=10, padx=10, fill='both', expand=True)
 
-        tree_scroll = ttk.Scrollbar(tree_frame)
+        tree_scroll = Scrollbar(tree_frame)
         tree_scroll.pack(side="right", fill="y")
 
         self.device_tree = ttk.Treeview(
             tree_frame, 
             yscrollcommand=tree_scroll.set, 
-            columns=("ID", "IP", "Gateway"), 
+            columns=("ID", "Name", "IP", "Gateway"), 
             show="headings"
         )
         self.device_tree.pack(fill='both', expand=True)
 
         tree_scroll.config(command=self.device_tree.yview)
 
-        self.device_tree.heading("ID", text="デバイス識別ID", anchor="w")
+        self.device_tree.heading("ID", text="ID", anchor="w")
+        self.device_tree.heading("Name", text="デバイス識別名", anchor="w")
         self.device_tree.heading("IP", text="IPアドレス", anchor="w")
         self.device_tree.heading("Gateway", text="ゲートウェイ", anchor="w")
 
         self.device_tree.column("ID", width=100, anchor="w")
+        self.device_tree.column("Name", width=100, anchor="w")
         self.device_tree.column("IP", width=120, anchor="w")
         self.device_tree.column("Gateway", width=120, anchor="w")
         
@@ -81,15 +82,15 @@ class DeviceListPage(Frame):
         
 
     def init_data(self):
-        devices = [
-            ("Dev-001", "192.168.1.10", "192.168.1.1"),
-            ("Dev-002", "192.168.1.11", "192.168.1.1"),
-            ("Dev-003", "10.0.0.50", "10.0.0.1"),
-            ("Dev-004", "172.16.0.25", "172.16.0.1"),
-        ]
+        try:
+            devices = firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").get()
+            
+            for device in devices:
+                data = device.to_dict()
+                self.device_tree.insert("", "end", iid=device.id, values=(device.id, data["Name"], data["IP"], data["Gateway"]))
 
-        for id_val, ip_val, gw_val in devices:
-            self.device_tree.insert("", "end", iid=id_val, values=(id_val, ip_val, gw_val))
+        except Exception:
+            messagebox.showerror("エラー", "デバイスリストの取得中にエラーが発生しました。")
 
 
     def open_create_device_page(self):

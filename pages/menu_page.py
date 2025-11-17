@@ -17,7 +17,7 @@ class MenuPage(Frame):
         
         menus = {
             "デバイス一覧": lambda: self.controller.show_frame("DeviceListPage"),
-            "デバイス情報": lambda: None,
+            "システム情報": lambda: self.controller.show_frame("SystemInfoPage"),
             "システム終了": self.terminate_system
         }
         
