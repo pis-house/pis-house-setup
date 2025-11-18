@@ -98,28 +98,27 @@ class DeviceListPage(Frame):
 
 
     def delete_device_selected_device(self):
-        selected_item_id = self.device_tree.selection()
+        selected_item_id = self.device_tree.selection()[0]
         
         if not selected_item_id:
             messagebox.showwarning("警告", "削除するデバイスを選択してください。")
             return
-            
-        device_id = self.device_tree.item(selected_item_id, 'values')[0]
 
         confirm = messagebox.askyesno(
-            "削除の確認", 
-            f"デバイス ID: {device_id} を削除してもよろしいですか？\nこの操作は元に戻せません。"
+            "削除の確認",   
+            f"デバイス ID: {selected_item_id} を削除してもよろしいですか？\nこの操作は元に戻せません。"
         )
         
         if confirm:
+            firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").document(selected_item_id).delete()
             self.device_tree.delete(selected_item_id)
 
 
     def open_edit_device_page(self):
-        selected_item_id = self.device_tree.selection()
+        selected_item_id = self.device_tree.selection()[0]
         
         if not selected_item_id:
             messagebox.showwarning("警告", "編集するデバイスを選択してください。")
             return
 
-        self.controller.show_frame("SetupDevicePage", args={'id': selected_item_id[0]})
+        self.controller.show_frame("SetupDevicePage", args={'id': selected_item_id})

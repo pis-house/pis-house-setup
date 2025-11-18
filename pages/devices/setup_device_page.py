@@ -165,11 +165,13 @@ class SetupDevicePage(Frame):
             if error_message is not None:
                 messagebox.showerror("エラー", error_message)
                 return
-                
-            target_collection_ref = firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices")
             
-            target_collection_ref.add(firestore_data)
-            messagebox.showinfo("成功", "デバイス設定が正常に登録されました。")
+            if self.device_id is None:
+                firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").add(firestore_data)
+            else:
+                firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").document(self.device_id).set(firestore_data)
+                
+            messagebox.showinfo("成功", "デバイス設定が正常に完了しました。")
             self.controller.show_frame("DeviceListPage")
             
         except Exception as e:
