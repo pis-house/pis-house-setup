@@ -2,3 +2,4 @@ __pycache__/
 .env
 /environment
 app_uuid.txt
+esp32_uploads/

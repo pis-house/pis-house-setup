@@ -37,6 +37,7 @@ class SetupDevicePage(Frame):
             ("ssid", "SSID名"),
             ("password", "パスワード"),
             ("ip_address", "IPアドレス"),
+            ("self_ip_address", "ラズパイIPアドレス"),
             ("gateway", "ゲートウェイ"),
             ("subnet", "サブネット"),
         ]
@@ -52,7 +53,7 @@ class SetupDevicePage(Frame):
         
         for i, (key, label_text) in enumerate(fields):
             row_index = i
-            if key in ["ip_address", "gateway", "subnet"]:
+            if key in ["ip_address", "self_ip_address", "gateway", "subnet"]:
                 row_index += 1 
 
             Label(form_frame, text=f"{label_text}:", width=15, anchor='w').grid(row=row_index, column=0, pady=5, padx=5)
@@ -60,9 +61,6 @@ class SetupDevicePage(Frame):
             entry = Entry(form_frame, width=40)
             entry.grid(row=row_index, column=1, pady=5, padx=5)
             self.entries[key] = entry
-            
-            if key == "password":
-                entry.config(show="*")
 
         form_frame.grid_columnconfigure(0, weight=1)
         form_frame.grid_columnconfigure(1, weight=1)
@@ -110,6 +108,9 @@ class SetupDevicePage(Frame):
         self.entries['ip_address'].delete(0, 'end')
         self.entries['ip_address'].insert(0, ip_address)
         
+        self.entries['self_ip_address'].delete(0, 'end')
+        self.entries['self_ip_address'].insert(0, network_config_info.ip)
+        
         self.entries['subnet'].delete(0, 'end')
         self.entries['subnet'].insert(0, network_config_info.subnet)
         
@@ -126,6 +127,7 @@ class SetupDevicePage(Frame):
             "ssid": "SSID名",
             "password": "パスワード",
             "ip_address": "IPアドレス",
+            "self_ip_address": "ラズパイIPアドレス",
             "gateway": "ゲートウェイ",
             "subnet": "サブネット",
         }
@@ -140,6 +142,7 @@ class SetupDevicePage(Frame):
             "ssid": setup_data["ssid"],
             "password": setup_data["password"],
             "ip": setup_data["ip_address"],
+            "self_ip": setup_data['self_ip_address'],
             "gateway": setup_data["gateway"],
             "subnet": setup_data["subnet"],
         }
@@ -149,6 +152,7 @@ class SetupDevicePage(Frame):
                 "ssid": setup_data["ssid"],
                 "password": setup_data["password"],
                 "ip": setup_data["ip_address"],
+                "remote_ip": setup_data['self_ip_address'],
                 "gateway": setup_data["gateway"],
                 "subnet": setup_data["subnet"],
             }
@@ -190,6 +194,7 @@ class SetupDevicePage(Frame):
                     "ssid": firestore_data.get("ssid", ""),
                     "password": firestore_data.get("password", ""),
                     "ip_address": firestore_data.get("ip", ""),
+                    "self_ip_address": firestore_data.get("self_ip",""),
                     "gateway": firestore_data.get("gateway", ""),
                     "subnet": firestore_data.get("subnet", ""),
                 }
