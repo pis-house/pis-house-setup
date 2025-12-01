@@ -1,4 +1,4 @@
-from tkinter import Frame, Label, Entry, Button
+from tkinter import Frame, Label, Entry, Button, Radiobutton, StringVar
 from tkinter import messagebox
 import random
 from utils.network_config_info import NetworkConfigInfo
@@ -12,6 +12,7 @@ class SetupDevicePage(Frame):
         super().__init__(parent)
         self.controller = controller
         self.device_id = args.get('id')
+        self.device_type_var = StringVar(self, value='light') 
         self.set_ui()
         self.get_edit_data()
         
@@ -32,15 +33,46 @@ class SetupDevicePage(Frame):
 
         self.entries = {}
         
-        fields = [
-            ("device_name", "デバイス名"),
-            ("ssid", "SSID名"),
-            ("password", "パスワード"),
-            ("ip_address", "IPアドレス"),
-            ("self_ip_address", "ラズパイIPアドレス"),
-            ("gateway", "ゲートウェイ"),
-            ("subnet", "サブネット"),
-        ]
+        current_row = 0
+
+        Label(form_frame, text="デバイス名:", width=15, anchor='w').grid(row=current_row, column=0, pady=5, padx=5)
+        entry = Entry(form_frame, width=40)
+        entry.grid(row=current_row, column=1, pady=5, padx=5)
+        self.entries['device_name'] = entry
+        current_row += 1
+
+        Label(form_frame, text="デバイス種別:", width=15, anchor='w').grid(row=current_row, column=0, pady=5, padx=5)
+        
+        radio_frame = Frame(form_frame)
+        radio_frame.grid(row=current_row, column=1, pady=5, padx=100, sticky='w')
+        
+        Radiobutton(
+            radio_frame, 
+            text="照明", 
+            variable=self.device_type_var, 
+            value='light'
+        ).pack(side='left', padx=10)
+        
+        Radiobutton(
+            radio_frame, 
+            text="エアコン", 
+            variable=self.device_type_var, 
+            value='aircon'
+        ).pack(side='left', padx=10)
+        
+        current_row += 1
+
+        Label(form_frame, text="SSID名:", width=15, anchor='w').grid(row=current_row, column=0, pady=5, padx=5)
+        entry = Entry(form_frame, width=40)
+        entry.grid(row=current_row, column=1, pady=5, padx=5)
+        self.entries['ssid'] = entry
+        current_row += 1
+        
+        Label(form_frame, text="パスワード:", width=15, anchor='w').grid(row=current_row, column=0, pady=5, padx=5)
+        entry = Entry(form_frame, width=40)
+        entry.grid(row=current_row, column=1, pady=5, padx=5)
+        self.entries['password'] = entry
+        current_row += 1
 
         auto_assign_button = Button(
             form_frame,
@@ -49,18 +81,23 @@ class SetupDevicePage(Frame):
             width=20,
             command=self.auto_assign_network_config
         )
-        auto_assign_button.grid(row=3, column=1, columnspan=1)
-        
-        for i, (key, label_text) in enumerate(fields):
-            row_index = i
-            if key in ["ip_address", "self_ip_address", "gateway", "subnet"]:
-                row_index += 1 
+        auto_assign_button.grid(row=current_row, column=1, columnspan=1, pady=5)
+        current_row += 1
 
-            Label(form_frame, text=f"{label_text}:", width=15, anchor='w').grid(row=row_index, column=0, pady=5, padx=5)
+        network_fields = [
+            ("ip_address", "IPアドレス"),
+            ("self_ip_address", "ラズパイIPアドレス"),
+            ("gateway", "ゲートウェイ"),
+            ("subnet", "サブネット"),
+        ]
+
+        for key, label_text in network_fields:
+            Label(form_frame, text=f"{label_text}:", width=15, anchor='w').grid(row=current_row, column=0, pady=5, padx=5)
             
             entry = Entry(form_frame, width=40)
-            entry.grid(row=row_index, column=1, pady=5, padx=5)
+            entry.grid(row=current_row, column=1, pady=5, padx=5)
             self.entries[key] = entry
+            current_row += 1
 
         form_frame.grid_columnconfigure(0, weight=1)
         form_frame.grid_columnconfigure(1, weight=1)
@@ -102,8 +139,13 @@ class SetupDevicePage(Frame):
         network_config_info = NetworkConfigInfo()
         if not network_config_info.set_config():
             messagebox.showerror("エラー", "ネットワーク情報の取得に失敗しました")
+            return
         
         ip_address = self.generate_random_ip(gateway_ip=network_config_info.gateway, subnet_mask=network_config_info.subnet)
+        
+        if ip_address is None:
+            messagebox.showerror("エラー", "自動割り当てはサブネットマスクが255.255.255.0の場合のみサポートされています。")
+            return
 
         self.entries['ip_address'].delete(0, 'end')
         self.entries['ip_address'].insert(0, ip_address)
@@ -120,6 +162,7 @@ class SetupDevicePage(Frame):
 
     def submit(self):
         setup_data = {key: entry.get() for key, entry in self.entries.items()}
+        setup_data['device_type'] = self.device_type_var.get()
         device_name = setup_data.get("device_name")
         
         validation_fields = {
@@ -139,6 +182,7 @@ class SetupDevicePage(Frame):
         
         firestore_data = {
             "name": device_name,
+            "device_type": setup_data['device_type'],
             "ssid": setup_data["ssid"],
             "password": setup_data["password"],
             "ip": setup_data["ip_address"],
@@ -170,10 +214,11 @@ class SetupDevicePage(Frame):
                 messagebox.showerror("エラー", error_message)
                 return
             
+            collection_ref = firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices")
             if self.device_id is None:
-                firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").add(firestore_data)
+                collection_ref.add(firestore_data)
             else:
-                firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").document(self.device_id).set(firestore_data)
+                collection_ref.document(self.device_id).set(firestore_data)
                 
             messagebox.showinfo("成功", "デバイス設定が正常に完了しました。")
             self.controller.show_frame("DeviceListPage")
@@ -198,6 +243,9 @@ class SetupDevicePage(Frame):
                     "gateway": firestore_data.get("gateway", ""),
                     "subnet": firestore_data.get("subnet", ""),
                 }
+                
+                device_type = firestore_data.get("device_type", 'light')
+                self.device_type_var.set(device_type)
 
                 for key, value in initial_data.items():
                     if value is None:
