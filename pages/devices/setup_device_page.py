@@ -6,6 +6,7 @@ from firebase_admin import firestore
 from app_data import AppData
 from utils.esp32_file_transfer import Esp32FileTransfer
 import json
+import ulid
 
 class SetupDevicePage(Frame):
     def __init__(self, parent, controller, **args):
@@ -46,19 +47,29 @@ class SetupDevicePage(Frame):
         radio_frame = Frame(form_frame)
         radio_frame.grid(row=current_row, column=1, pady=5, padx=100, sticky='w')
         
-        Radiobutton(
+        light_radio = Radiobutton(
             radio_frame, 
             text="照明", 
             variable=self.device_type_var, 
             value='light'
-        ).pack(side='left', padx=10)
+        )
         
-        Radiobutton(
+        light_radio.pack(side='left', padx=10)
+        
+        if self.device_id:
+            light_radio.config(state="disabled")
+        
+        aricon_radio = Radiobutton(
             radio_frame, 
             text="エアコン", 
             variable=self.device_type_var, 
             value='aircon'
-        ).pack(side='left', padx=10)
+        )
+        
+        aricon_radio.pack(side='left', padx=10)
+        
+        if self.device_id:
+            aricon_radio.config(state="disabled")
         
         current_row += 1
 
@@ -180,7 +191,9 @@ class SetupDevicePage(Frame):
                 messagebox.showerror("入力エラー", f"「{display_name}」は必須項目です。入力してください。")
                 return
         
+        
         firestore_data = {
+            "id": self.device_id,
             "name": device_name,
             "device_type": setup_data['device_type'],
             "ssid": setup_data["ssid"],
@@ -190,6 +203,13 @@ class SetupDevicePage(Frame):
             "gateway": setup_data["gateway"],
             "subnet": setup_data["subnet"],
         }
+        
+        if self.device_id is None:
+            setup_device_id = str(ulid.new())
+            firestore_data["id"] = setup_device_id
+            firestore_data["is_active"] = False
+            firestore_data["aircon_temperature"] = 0
+            firestore_data["light_brightness_percent"] = 0
 
         try:
             setting_data = {
@@ -216,9 +236,9 @@ class SetupDevicePage(Frame):
             
             collection_ref = firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices")
             if self.device_id is None:
-                collection_ref.add(firestore_data)
+                collection_ref.document(setup_device_id).set(firestore_data)
             else:
-                collection_ref.document(self.device_id).set(firestore_data)
+                collection_ref.document(self.device_id).update(firestore_data)
                 
             messagebox.showinfo("成功", "デバイス設定が正常に完了しました。")
             self.controller.show_frame("DeviceListPage")
