@@ -71,6 +71,15 @@ class DeviceListPage(Frame):
         )
         delete_button.pack(side="left", padx=10)
         
+        setup_infrared_button = Button(
+            button_frame, 
+            text="赤外線登録", 
+            font=("MSゴシック", "20", " "),
+            width=10,
+            command=self.setup_infrared_device_selected_device
+        )
+        setup_infrared_button.pack(side="left", padx=10)
+        
         back_button = Button(
             button_frame, 
             text="終了", 
@@ -112,6 +121,16 @@ class DeviceListPage(Frame):
         if confirm:
             firestore.client().collection("setup").document(AppData.APP_UUID).collection("devices").document(selected_item_id).delete()
             self.device_tree.delete(selected_item_id)
+            
+    
+    def setup_infrared_device_selected_device(self):
+        selected_item_id = self.device_tree.selection()[0]
+        
+        if not selected_item_id:
+            messagebox.showwarning("警告", "編集するデバイスを選択してください。")
+            return
+
+        self.controller.show_frame("SetupInfraredPage", args={'id': selected_item_id})
 
 
     def open_edit_device_page(self):

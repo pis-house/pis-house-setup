@@ -3,6 +3,7 @@ from pages.devices.device_list_page import DeviceListPage
 from pages.menu_page import MenuPage
 from pages.devices.setup_device_page import SetupDevicePage
 from pages.systems.system_info_page import SystemInfoPage
+from pages.devices.setup_infrared_page import SetupInfraredPage
 from dotenv import load_dotenv
 import os
 import firebase_admin
@@ -33,6 +34,7 @@ class Main(Tk):
             "DeviceListPage": DeviceListPage,
             "SetupDevicePage": SetupDevicePage,
             "SystemInfoPage": SystemInfoPage,
+            "SetupInfraredPage": SetupInfraredPage
         }
         
         self.title("セットアップ")
