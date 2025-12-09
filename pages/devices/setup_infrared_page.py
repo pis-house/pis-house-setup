@@ -1,6 +1,7 @@
 from tkinter import Frame, Label, Entry, Button, messagebox
 from firebase_admin import firestore
 from app_data import AppData
+from tkinter.ttk import Combobox
 
 class SetupInfraredPage(Frame):
     def __init__(self, parent, controller, **args):
@@ -19,7 +20,7 @@ class SetupInfraredPage(Frame):
         self.form_frame = Frame(self)
         self.form_frame.pack(padx=16, pady=8)
 
-        headers = ["赤外線名", "コマンド", "アドレス", ""]
+        headers = ["赤外線名", "アドレス", "コマンド", "プロトコル"]
         for i, h in enumerate(headers):
             Label(self.form_frame, text=h, font=("MSゴシック", 10, "bold")).grid(row=1, column=i, padx=6, pady=6)
 
@@ -35,6 +36,15 @@ class SetupInfraredPage(Frame):
         back_btn.pack(side='left', padx=8)
 
     def load_device_info(self):
+        proc_list = [
+            "NEC",
+            "SONY",
+            "RC5",
+            "RC6",
+            "JVC",
+            "SAMSUNG",
+            "PANASONIC"
+        ]
         aircon_patterns = {
             "aircon_stop": "エアコン停止",
             "aircon_heat": "暖房",
@@ -65,29 +75,50 @@ class SetupInfraredPage(Frame):
             
             name_label = Label(self.form_frame, text=pattern_name, font=("MSゴシック", 12))
             name_label.grid(row=row_index, column=0, padx=4, pady=4, sticky='w')
+            
+            addr_entry = Entry(self.form_frame, width=18)
+            addr_entry.grid(row=row_index, column=1, padx=4, pady=4, sticky='w')
 
             cmd_entry = Entry(self.form_frame, width=24)
-            cmd_entry.grid(row=row_index, column=1, padx=4, pady=4, sticky='w')
-
-            addr_entry = Entry(self.form_frame, width=18)
-            addr_entry.grid(row=row_index, column=2, padx=4, pady=4, sticky='w')
+            cmd_entry.grid(row=row_index, column=2, padx=4, pady=4, sticky='w')
+            
+            proc_combobox = Combobox(
+                self.form_frame, 
+                values=[
+                    "NEC",
+                    "SONY",
+                    "RC5",
+                    "RC6",
+                    "JVC",
+                    "SAMSUNG",
+                    "PANASONIC"
+                ],
+                width=16, 
+                state='readonly'
+            )
+            proc_combobox.grid(row=row_index, column=3, padx=4, pady=4, sticky='w')
+            
             if pattern_key in existing_data:
                 data = existing_data[pattern_key]
                 
-                # Command
                 cmd = data.get("command", "")
                 cmd_entry.insert(0, cmd)
-                
-                # Address
+
                 addr = data.get("address", "")
                 addr_entry.insert(0, addr)
+                
+                proc = data.get("protocol", "")
+                if proc in proc_list:
+                    proc_combobox.set(proc)
+                
 
 
             self.rows.append({
                 "pattern_key": pattern_key,
                 "pattern_name": pattern_name,
+                "address_entry": addr_entry,
                 "command_entry": cmd_entry,
-                "address_entry": addr_entry
+                "protocol_combobox": proc_combobox
             })
 
     def on_save(self):
@@ -95,8 +126,9 @@ class SetupInfraredPage(Frame):
         batch = db.batch()
 
         for r in self.rows:
-            cmd = r["command_entry"].get().strip()
             addr = r["address_entry"].get().strip()
+            cmd = r["command_entry"].get().strip()
+            proc = r["protocol_combobox"].get().strip()
             
             pattern_key = r["pattern_key"] 
             
@@ -106,8 +138,9 @@ class SetupInfraredPage(Frame):
                 batch.delete(infrared_document_ref)
             else:
                 batch.set(infrared_document_ref, {
+                    "address": addr,
                     "command": cmd,
-                    "address": addr
+                    "protocol": proc,
                 })
         
         try:
