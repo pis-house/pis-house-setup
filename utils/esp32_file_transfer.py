@@ -3,8 +3,12 @@ import subprocess
 class Esp32FileTransfer:
     ESP32_PORT = '/dev/ttyUSB0'
     ESP32_CHIP = 'esp32'
-    LITTLEFS_START_ADDR = '0x290000' 
-    LITTLEFS_SIZE = '0x160000'
+    # LITTLEFS_START_ADDR = '0x290000' 
+    # LITTLEFS_SIZE = '0x160000'
+    
+    # No OTA (2MB APP/2MB SPIFFS) の標準的な構成
+    LITTLEFS_START_ADDR = '0x210000' 
+    LITTLEFS_SIZE = '0x1F0000'
     
     @staticmethod
     def image_create_and_upload(data_folder, mklittlefs_path, output_image):
