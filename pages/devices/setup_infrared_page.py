@@ -99,7 +99,7 @@ class SetupInfraredPage(Frame):
             proc_combobox.grid(row=row_index, column=3, padx=4, pady=4, sticky='w')
             
             custom_process_entry = Entry(self.form_frame, width=24)
-            custom_process_entry.grid(row=row_index, column=2, padx=4, pady=4, sticky='w')
+            custom_process_entry.grid(row=row_index, column=4, padx=4, pady=4, sticky='w')
             
             
             if pattern_key in existing_data:
