@@ -20,7 +20,7 @@ class SetupInfraredPage(Frame):
         self.form_frame = Frame(self)
         self.form_frame.pack(padx=16, pady=8)
 
-        headers = ["赤外線名", "アドレス", "コマンド", "プロトコル"]
+        headers = ["赤外線名", "アドレス", "コマンド", "プロトコル", "独自処理識別名"]
         for i, h in enumerate(headers):
             Label(self.form_frame, text=h, font=("MSゴシック", 10, "bold")).grid(row=1, column=i, padx=6, pady=6)
 
@@ -98,6 +98,10 @@ class SetupInfraredPage(Frame):
             )
             proc_combobox.grid(row=row_index, column=3, padx=4, pady=4, sticky='w')
             
+            custom_processing_entry = Entry(self.form_frame, width=24)
+            custom_processing_entry.grid(row=row_index, column=2, padx=4, pady=4, sticky='w')
+            
+            
             if pattern_key in existing_data:
                 data = existing_data[pattern_key]
                 
@@ -110,6 +114,9 @@ class SetupInfraredPage(Frame):
                 proc = data.get("protocol", "")
                 if proc in proc_list:
                     proc_combobox.set(proc)
+
+                custom_process = data.get("custom_process", "")
+                custom_process.insert(0, custom_process)
                 
 
 
@@ -118,7 +125,8 @@ class SetupInfraredPage(Frame):
                 "pattern_name": pattern_name,
                 "address_entry": addr_entry,
                 "command_entry": cmd_entry,
-                "protocol_combobox": proc_combobox
+                "protocol_combobox": proc_combobox,
+                "custom_process_entry": custom_process
             })
 
     def on_save(self):
@@ -129,6 +137,7 @@ class SetupInfraredPage(Frame):
             addr = r["address_entry"].get().strip()
             cmd = r["command_entry"].get().strip()
             proc = r["protocol_combobox"].get().strip()
+            custom_process = r["custom_process"].get().strip()
             
             pattern_key = r["pattern_key"] 
             
@@ -141,6 +150,7 @@ class SetupInfraredPage(Frame):
                     "address": addr,
                     "command": cmd,
                     "protocol": proc,
+                    "custom_process": custom_process
                 })
         
         try:
