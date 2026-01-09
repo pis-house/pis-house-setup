@@ -126,7 +126,7 @@ class SetupInfraredPage(Frame):
                 "address_entry": addr_entry,
                 "command_entry": cmd_entry,
                 "protocol_combobox": proc_combobox,
-                "custom_process_entry": custom_process
+                "custom_process_entry": custom_process_entry
             })
 
     def on_save(self):
@@ -137,7 +137,7 @@ class SetupInfraredPage(Frame):
             addr = r["address_entry"].get().strip()
             cmd = r["command_entry"].get().strip()
             proc = r["protocol_combobox"].get().strip()
-            custom_process = r["custom_process"].get().strip()
+            custom_process = r["custom_process_entry"].get().strip()
             
             pattern_key = r["pattern_key"] 
             
